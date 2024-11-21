@@ -35,13 +35,22 @@ def create_visualization(video_path, embedding_path, output_path):
     ax2.set_xlabel('Time (seconds)')
     ax2.set_ylabel('PCA Component 1')
     
+    frame_list = []
+    # Pre-load frames with progress bar
+    with tqdm(total=total_frames, desc="Loading frames") as pbar:
+        for frame_idx in range(0, total_frames, 2):  # Skip every other frame for speed
+            cap.set(cv2.CAP_PROP_POS_FRAMES, frame_idx)
+            ret, frame = cap.read()
+            if ret:
+                frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                frame_list.append(frame_rgb)
+            pbar.update(2)
+    
     def update(frame_idx):
         # Update video
-        cap.set(cv2.CAP_PROP_POS_FRAMES, frame_idx)
-        ret, frame = cap.read()
-        if ret:
-            frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            im.set_array(frame_rgb)
+        frame_num = frame_idx // 2  # Account for frame skipping
+        if frame_num < len(frame_list):
+            im.set_array(frame_list[frame_num])
             
             # Update time indicator
             current_time = frame_idx / fps
@@ -49,18 +58,13 @@ def create_visualization(video_path, embedding_path, output_path):
             
         return im, current_time_line
     
-    # Create animation with progress bar
-    frames = range(0, total_frames, 2)  # Skip every other frame for speed
-    with tqdm(total=len(frames), desc="Generating animation") as pbar:
-        def progress_callback(current_frame):
-            pbar.update(1)
-            
-        anim = FuncAnimation(
-            fig, update,
-            frames=frames,
-            interval=1000/fps,  # in milliseconds
-            blit=True
-        )
+    # Create animation
+    anim = FuncAnimation(
+        fig, update,
+        frames=range(0, total_frames, 2),
+        interval=1000/fps,  # in milliseconds
+        blit=True
+    )
     
     # Save animation to video file
     anim.save(output_path, writer='ffmpeg')
