@@ -113,15 +113,17 @@ def main():
     parser = argparse.ArgumentParser(description='Analyze movement in background-subtracted video')
     parser.add_argument('input', help='Input video file path')
     parser.add_argument('--threshold', type=float, default=0.1,
-                      help='Threshold for movement detection (0.0-1.0)')
+                      help='Threshold for movement detection (default: 0.1)')
     parser.add_argument('--min-frames', type=int, default=30,
-                      help='Minimum frames for occupancy mask')
+                      help='Minimum frames for occupancy mask (default: 30)')
     parser.add_argument('--max-frames', type=int, default=1000,
-                      help='Maximum frames to use for analysis (0 for no limit)')
+                      help='Maximum frames to use for analysis (0 for no limit) (default: 1000)')
     parser.add_argument('--batch-size', type=int, default=100,
-                      help='Batch size for incremental PCA')
+                      help='Batch size for incremental PCA (default: 100)')
     parser.add_argument('--output-dir', type=str, default='output',
-                      help='Output directory for results')
+                      help='Output directory for results (default: output)')
+    parser.add_argument('--n-components', type=int, default=1,
+                      help='Number of PCA components (default: 1)')
     
     args = parser.parse_args()
     
