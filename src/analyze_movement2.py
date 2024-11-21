@@ -162,9 +162,11 @@ def main():
     # Save and plot mask
     mask_path = output_dir / 'occupancy_mask.npy'
     mask_plot_path = output_dir / 'occupancy_mask.png'
+    embedding_path = output_dir / 'embedding.npy'
     print(f"Saving occupancy mask plot to {mask_plot_path}")
     plot_occupancy_mask(mask, mask_plot_path)
     np.save(mask_path, mask)
+    np.save(embedding_path, embedding)
     
     print("Analysis complete!")
 
