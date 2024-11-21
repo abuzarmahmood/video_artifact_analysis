@@ -36,7 +36,6 @@ def create_occupancy_mask(video_path, threshold=0.1, min_frames=30, max_frames=1
         frame_count += 1
     
     cap.release()
-    pbar.close()
     
     # Create binary mask where movement occurred in at least min_frames
     mask = occupancy > (min_frames / frame_count)
