@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
-from umap import UMAP
+from sklearn.decomposition import PCA
 import argparse
 from pathlib import Path
 from remove_background import remove_background
@@ -55,14 +55,14 @@ def create_occupancy_mask(video_path, threshold=0.1, min_frames=30, max_frames=1
 
 def reduce_dimensionality(data, mask, n_components=1):
     """
-    Perform UMAP dimensionality reduction on the masked pixel data.
+    Perform PCA dimensionality reduction on the masked pixel data.
     """
     # Flatten mask and use it to select relevant pixels
     flat_mask = mask.flatten()
     masked_data = data[:, flat_mask]
     
-    # Initialize and fit UMAP
-    reducer = UMAP(n_components=n_components, random_state=42)
+    # Initialize and fit PCA
+    reducer = PCA(n_components=n_components, random_state=42)
     embedding = reducer.fit_transform(masked_data)
     
     return embedding
@@ -85,9 +85,9 @@ def plot_results(embedding, fps, output_path):
     time_seconds = np.arange(len(embedding)) / fps
     plt.figure(figsize=(12, 6))
     plt.plot(time_seconds, embedding[:, 0], '-b', alpha=0.7)
-    plt.title('Movement Trajectory (UMAP 1D Projection)')
+    plt.title('Movement Trajectory (PCA 1D Projection)')
     plt.xlabel('Time (seconds)')
-    plt.ylabel('UMAP Dimension 1')
+    plt.ylabel('PCA Component 1')
     plt.grid(True, alpha=0.3)
     plt.savefig(output_path)
     plt.close()
