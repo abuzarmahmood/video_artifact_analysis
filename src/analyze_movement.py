@@ -60,6 +60,17 @@ def reduce_dimensionality(data, mask, n_components=1):
     
     return embedding
 
+def plot_occupancy_mask(mask, output_path):
+    """
+    Plot the occupancy mask as a heatmap.
+    """
+    plt.figure(figsize=(10, 8))
+    plt.imshow(mask, cmap='hot')
+    plt.colorbar(label='Occupancy')
+    plt.title('Movement Occupancy Mask')
+    plt.savefig(output_path)
+    plt.close()
+
 def plot_results(embedding, output_path):
     """
     Plot the 1D embedding results over time.
@@ -100,11 +111,14 @@ def main():
     
     # Save results
     plot_path = output_dir / 'movement_trajectory.png'
-    print(f"Saving plot to {plot_path}")
+    print(f"Saving trajectory plot to {plot_path}")
     plot_results(embedding, plot_path)
     
-    # Save mask
+    # Save and plot mask
     mask_path = output_dir / 'occupancy_mask.npy'
+    mask_plot_path = output_dir / 'occupancy_mask.png'
+    print(f"Saving occupancy mask plot to {mask_plot_path}")
+    plot_occupancy_mask(mask, mask_plot_path)
     np.save(mask_path, mask)
     
     print("Analysis complete!")
