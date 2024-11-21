@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
-import numpy as np
+from tqdm import tqdm
 
 def create_visualization(video_path, embedding_path, output_path):
     """Create a visualization with video on top and PCA embedding below, saving to video file"""
@@ -47,13 +47,18 @@ def create_visualization(video_path, embedding_path, output_path):
             
         return im, current_time_line
     
-    # Create animation
-    anim = FuncAnimation(
-        fig, update,
-        frames=range(0, total_frames, 2),  # Skip every other frame for speed
-        interval=1000/fps,  # in milliseconds
-        blit=True
-    )
+    # Create animation with progress bar
+    frames = range(0, total_frames, 2)  # Skip every other frame for speed
+    with tqdm(total=len(frames), desc="Generating animation") as pbar:
+        def progress_callback(current_frame):
+            pbar.update(1)
+            
+        anim = FuncAnimation(
+            fig, update,
+            frames=frames,
+            interval=1000/fps,  # in milliseconds
+            blit=True
+        )
     
     # Save animation to video file
     anim.save(output_path, writer='ffmpeg')
