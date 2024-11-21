@@ -4,8 +4,8 @@ import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 import numpy as np
 
-def create_visualization(video_path, embedding_path, output_path=None):
-    """Create a visualization with video on top and PCA embedding below"""
+def create_visualization(video_path, embedding_path, output_path):
+    """Create a visualization with video on top and PCA embedding below, saving to video file"""
     
     # Load pre-computed embedding
     embedding = np.load(embedding_path)
@@ -55,10 +55,8 @@ def create_visualization(video_path, embedding_path, output_path=None):
         blit=True
     )
     
-    if output_path:
-        anim.save(output_path, writer='ffmpeg')
-    else:
-        plt.show()
+    # Save animation to video file
+    anim.save(output_path, writer='ffmpeg')
     
     cap.release()
 
@@ -67,7 +65,7 @@ def main():
     parser = argparse.ArgumentParser(description='Visualize video with PCA embedding')
     parser.add_argument('video_path', help='Path to input video')
     parser.add_argument('embedding_path', help='Path to .npy file containing PCA embedding')
-    parser.add_argument('--output', help='Path to output video (optional)')
+    parser.add_argument('output', help='Path to output video')
     args = parser.parse_args()
     
     create_visualization(args.video_path, args.embedding_path, args.output)
