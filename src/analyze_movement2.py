@@ -40,7 +40,7 @@ def create_occupancy_mask(video_path, threshold=0.1, min_frames=30, max_frames=1
     # Create binary mask where movement occurred in at least min_frames
     mask = occupancy > (min_frames / frame_count)
     
-    return mask, fps, frame_count
+    return mask, fps
 
 def reduce_dimensionality_incremental(video_path, mask, n_components=1, batch_size=100, threshold=0.1):
     """
@@ -86,7 +86,7 @@ def reduce_dimensionality_incremental(video_path, mask, n_components=1, batch_si
         embedding.extend(ipca.transform(batch_array))
     
     cap.release()
-    return np.array(embedding)
+    return np.array(embedding), total_frames
 
 def plot_occupancy_mask(mask, output_path):
     """
@@ -137,7 +137,7 @@ def main():
     
     # Process input video to create mask
     print("Creating occupancy mask...")
-    mask, fps, total_frames = create_occupancy_mask(
+    mask, fps = create_occupancy_mask(
         args.input,
         threshold=args.threshold,
         min_frames=args.min_frames,
@@ -145,7 +145,7 @@ def main():
     )
     
     print("Performing incremental dimensionality reduction...")
-    embedding = reduce_dimensionality_incremental(
+    embedding, total_frames = reduce_dimensionality_incremental(
         args.input,
         mask,
         batch_size=args.batch_size,
