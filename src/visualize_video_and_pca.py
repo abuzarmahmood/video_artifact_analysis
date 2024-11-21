@@ -67,6 +67,8 @@ def create_visualization(video_path, embedding_path, output_path):
     )
     
     # Save animation to video file
+    print(f'Saving video to {output_path}')
+
     anim.save(output_path, writer='ffmpeg')
     
     cap.release()
