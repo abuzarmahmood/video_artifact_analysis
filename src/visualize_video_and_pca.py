@@ -2,14 +2,13 @@ import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
-from analyze_movement import create_occupancy_mask, reduce_dimensionality
+import numpy as np
 
-def create_visualization(video_path, output_path=None):
+def create_visualization(video_path, embedding_path, output_path=None):
     """Create a visualization with video on top and PCA embedding below"""
     
-    # Create mask and get PCA embedding
-    mask = create_occupancy_mask(video_path)
-    embedding = reduce_dimensionality(None, mask)  # We'll need to modify this to get the actual data
+    # Load pre-computed embedding
+    embedding = np.load(embedding_path)
     
     # Open video
     cap = cv2.VideoCapture(video_path)
@@ -67,10 +66,11 @@ def main():
     import argparse
     parser = argparse.ArgumentParser(description='Visualize video with PCA embedding')
     parser.add_argument('video_path', help='Path to input video')
+    parser.add_argument('embedding_path', help='Path to .npy file containing PCA embedding')
     parser.add_argument('--output', help='Path to output video (optional)')
     args = parser.parse_args()
     
-    create_visualization(args.video_path, args.output)
+    create_visualization(args.video_path, args.embedding_path, args.output)
 
 if __name__ == '__main__':
     main()
