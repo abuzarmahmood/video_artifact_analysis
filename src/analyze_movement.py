@@ -6,7 +6,7 @@ import argparse
 from pathlib import Path
 from remove_background import remove_background
 
-def create_occupancy_mask(video_path, threshold=0.1, min_frames=30):
+def create_occupancy_mask(video_path, threshold=0.1, min_frames=30, max_frames=1000):
     """
     Create an occupancy mask from a background-subtracted video.
     Returns both the mask and the weighted pixel data for dimensionality reduction.
@@ -21,9 +21,14 @@ def create_occupancy_mask(video_path, threshold=0.1, min_frames=30):
     occupancy = np.zeros((height, width), dtype=np.float32)
     frame_data = []
     
+    frame_count = 0
     while cap.isOpened():
         ret, frame = cap.read()
         if not ret:
+            break
+            
+        # Skip frames if we're over max_frames
+        if max_frames and frame_count >= max_frames:
             break
             
         # Convert frame to grayscale and normalize
@@ -36,6 +41,7 @@ def create_occupancy_mask(video_path, threshold=0.1, min_frames=30):
         
         # Store frame data for later analysis
         frame_data.append(gray.flatten())
+        frame_count += 1
     
     cap.release()
     
@@ -93,6 +99,8 @@ def main():
                       help='Threshold for movement detection (0.0-1.0)')
     parser.add_argument('--min-frames', type=int, default=30,
                       help='Minimum frames for occupancy mask')
+    parser.add_argument('--max-frames', type=int, default=1000,
+                      help='Maximum frames to use for analysis (0 for no limit)')
     parser.add_argument('--output-dir', type=str, default='output',
                       help='Output directory for results')
     
@@ -106,7 +114,8 @@ def main():
     print("Creating occupancy mask...")
     mask, frame_data, fps = create_occupancy_mask(args.input, 
                                                  threshold=args.threshold,
-                                                 min_frames=args.min_frames)
+                                                 min_frames=args.min_frames,
+                                                 max_frames=args.max_frames)
     
     print("Performing dimensionality reduction...")
     embedding = reduce_dimensionality(frame_data, mask)
