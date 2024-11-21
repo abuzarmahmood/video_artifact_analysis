@@ -5,6 +5,7 @@ from sklearn.decomposition import IncrementalPCA
 import argparse
 from pathlib import Path
 from remove_background import remove_background
+from tqdm import tqdm
 
 def create_occupancy_mask(video_path, threshold=0.1, min_frames=30, max_frames=1000):
     """
@@ -35,6 +36,7 @@ def create_occupancy_mask(video_path, threshold=0.1, min_frames=30, max_frames=1
         frame_count += 1
     
     cap.release()
+    pbar.close()
     
     # Create binary mask where movement occurred in at least min_frames
     mask = occupancy > (min_frames / frame_count)
@@ -46,6 +48,7 @@ def reduce_dimensionality_incremental(video_path, mask, n_components=1, batch_si
     Perform incremental PCA dimensionality reduction on the masked pixel data.
     """
     cap = cv2.VideoCapture(video_path)
+    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     flat_mask = mask.flatten()
     
     # Initialize IncrementalPCA
@@ -55,6 +58,7 @@ def reduce_dimensionality_incremental(video_path, mask, n_components=1, batch_si
     batch = []
     embedding = []
     
+    pbar = tqdm(total=total_frames, desc="Processing frames")
     while cap.isOpened():
         ret, frame = cap.read()
         if not ret:
@@ -67,6 +71,7 @@ def reduce_dimensionality_incremental(video_path, mask, n_components=1, batch_si
         # Apply mask and add to batch
         masked_frame = gray.flatten()[flat_mask]
         batch.append(masked_frame)
+        pbar.update(1)
         
         # Process batch when it reaches batch_size
         if len(batch) >= batch_size:
