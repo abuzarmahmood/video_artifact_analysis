@@ -1,6 +1,9 @@
 import cv2
 import numpy as np
 import matplotlib
+import os
+import time
+import threading
 matplotlib.use('Agg')  # Set non-interactive backend
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
@@ -68,8 +71,26 @@ def create_visualization(video_path, embedding_path, output_path):
     
     # Save animation to video file
     print(f'Saving video to {output_path}')
-
+    
+    # Create and start the monitoring thread
+    stop_monitor = threading.Event()
+    def monitor_file_size():
+        while not stop_monitor.is_set():
+            if os.path.exists(output_path):
+                size_mb = os.path.getsize(output_path) / (1024 * 1024)
+                print(f"\rCurrent output size: {size_mb:.2f} MB", end='', flush=True)
+            time.sleep(2)
+    
+    monitor_thread = threading.Thread(target=monitor_file_size)
+    monitor_thread.start()
+    
+    # Save the animation
     anim.save(output_path, writer='ffmpeg')
+    
+    # Stop the monitoring thread and wait for it to finish
+    stop_monitor.set()
+    monitor_thread.join()
+    print()  # New line after monitoring
     
     cap.release()
 
