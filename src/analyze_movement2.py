@@ -117,14 +117,26 @@ def plot_results(embedding, fps, output_path):
     plt.close()
 
 def main():
-    parser = argparse.ArgumentParser(description='Analyze movement in video using frame differences')
-    parser.add_argument('input', help='Input video file path')
-    parser.add_argument('--batch-size', type=int, default=100,
-                      help='Batch size for incremental PCA (default: 100)')
-    parser.add_argument('--output-dir', type=str, default='output',
-                      help='Output directory for results (default: output)')
-    parser.add_argument('--n-components', type=int, default=1,
-                      help='Number of PCA components (default: 1)')
+    parser = argparse.ArgumentParser(
+        description='Analyze movement in video using frame differences and PCA',
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter
+    )
+    
+    # Required arguments
+    parser.add_argument('input', type=str,
+                       help='Path to input video file')
+    
+    # Output options
+    output_group = parser.add_argument_group('Output options')
+    output_group.add_argument('--output-dir', type=str, default='output',
+                          help='Directory for saving results')
+    
+    # Analysis parameters
+    analysis_group = parser.add_argument_group('Analysis parameters')
+    analysis_group.add_argument('--batch-size', type=int, default=100,
+                            help='Batch size for incremental PCA processing')
+    analysis_group.add_argument('--n-components', type=int, default=1,
+                            help='Number of PCA components to compute')
     
     args = parser.parse_args()
     
