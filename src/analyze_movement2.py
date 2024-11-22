@@ -148,6 +148,10 @@ def main():
                             help='Batch size for incremental PCA processing')
     analysis_group.add_argument('--n-components', type=int, default=1,
                             help='Number of PCA components to compute')
+    analysis_group.add_argument('--min-frames', type=int, default=30,
+                            help='Minimum number of frames with movement to include in mask')
+    analysis_group.add_argument('--max-frames', type=int, default=1000,
+                            help='Maximum number of frames to process (0 for all frames)')
     
     args = parser.parse_args()
     
@@ -161,6 +165,13 @@ def main():
     cap.release()
     
     print("Performing incremental dimensionality reduction...")
+    # Create occupancy mask first
+    mask, _ = create_occupancy_mask(
+        args.input,
+        min_frames=args.min_frames,
+        max_frames=args.max_frames
+    )
+    
     embedding, total_frames = reduce_dimensionality_incremental(
         args.input,
         n_components=args.n_components,
