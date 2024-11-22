@@ -35,7 +35,7 @@ def create_visualization(video_path, embedding_path, output_path):
     x_time = np.arange(len(embedding)) / fps
     line, = ax2.plot(x_time, np.abs(embedding), 'b-', alpha=0.5)
     current_time_line = ax2.axvline(x=0, color='r')
-    ax2.set_yscale('log')
+    ax2.set_yscale('symlog')
     ax2.set_xlabel('Time (seconds)')
     ax2.set_ylabel('PCA Component 1 (log scale)')
     ax2.grid(True, alpha=0.3, which='both')

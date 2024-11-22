@@ -120,7 +120,7 @@ def plot_results(embedding, fps, output_path):
     time_seconds = np.arange(len(embedding)) / fps
     plt.figure(figsize=(12, 6))
     plt.plot(time_seconds, np.abs(embedding[:, 0]), '-b', alpha=0.7)
-    plt.yscale('log')
+    plt.yscale('symlog')
     plt.title('Movement Trajectory (Incremental PCA 1D Projection)')
     plt.xlabel('Time (seconds)')
     plt.ylabel('PCA Component 1 (log scale)')
