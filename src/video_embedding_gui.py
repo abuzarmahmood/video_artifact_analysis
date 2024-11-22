@@ -24,8 +24,9 @@ class VideoEmbeddingViewer(QMainWindow):
         # Load embedding
         self.embedding = np.load(embedding_path)
         
-        # Initialize marked timepoints and current frame
-        self.marked_timepoints = []
+        # Initialize markers and current frame
+        self.markers = []  # List of (start, end) tuples
+        self.current_start = None  # Temporary storage for start marker
         self.current_frame = 0
         
         self.init_ui()
@@ -63,9 +64,14 @@ class VideoEmbeddingViewer(QMainWindow):
         self.play_button.clicked.connect(self.toggle_play)
         controls_layout.addWidget(self.play_button)
         
-        self.mark_button = QPushButton('Mark Timepoint')
-        self.mark_button.clicked.connect(self.mark_timepoint)
-        controls_layout.addWidget(self.mark_button)
+        self.start_button = QPushButton('Mark Start')
+        self.start_button.clicked.connect(self.mark_start)
+        controls_layout.addWidget(self.start_button)
+        
+        self.end_button = QPushButton('Mark End')
+        self.end_button.clicked.connect(self.mark_end)
+        self.end_button.setEnabled(False)  # Disabled until start is marked
+        controls_layout.addWidget(self.end_button)
         
         self.save_button = QPushButton('Save Timepoints')
         self.save_button.clicked.connect(self.save_timepoints)
@@ -89,9 +95,15 @@ class VideoEmbeddingViewer(QMainWindow):
         self.ax.plot(self.embedding)
         self.ax.set_yscale('symlog', linthresh=0.1)
         
-        # Plot marked timepoints
-        for timepoint in self.marked_timepoints:
-            self.ax.axvline(x=timepoint, color='r', alpha=0.5)
+        # Plot marked regions
+        for start, end in self.markers:
+            self.ax.axvspan(start, end, color='r', alpha=0.2)
+            self.ax.axvline(x=start, color='g', alpha=0.7, linestyle='--')
+            self.ax.axvline(x=end, color='r', alpha=0.7, linestyle='--')
+            
+        # Plot current start marker if exists
+        if self.current_start is not None:
+            self.ax.axvline(x=self.current_start, color='g', alpha=0.7)
             
         # Plot current position
         self.ax.axvline(x=self.current_frame, color='g', alpha=0.5)
@@ -139,9 +151,18 @@ class VideoEmbeddingViewer(QMainWindow):
             self.timer.stop()
             self.play_button.setText('Play')
             
-    def mark_timepoint(self):
-        if self.current_frame not in self.marked_timepoints:
-            self.marked_timepoints.append(self.current_frame)
+    def mark_start(self):
+        self.current_start = self.current_frame
+        self.start_button.setEnabled(False)
+        self.end_button.setEnabled(True)
+        self.update_embedding_plot()
+        
+    def mark_end(self):
+        if self.current_start is not None and self.current_frame > self.current_start:
+            self.markers.append((self.current_start, self.current_frame))
+            self.current_start = None
+            self.start_button.setEnabled(True)
+            self.end_button.setEnabled(False)
             self.update_embedding_plot()
             
     def save_timepoints(self):
@@ -149,7 +170,7 @@ class VideoEmbeddingViewer(QMainWindow):
         with open(output_path, 'w') as f:
             json.dump({
                 'video_path': self.video_path,
-                'timepoints': sorted(self.marked_timepoints)
+                'segments': sorted(self.markers)
             }, f, indent=2)
             
     def closeEvent(self, event):
