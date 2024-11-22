@@ -24,8 +24,9 @@ class VideoEmbeddingViewer(QMainWindow):
         # Load embedding
         self.embedding = np.load(embedding_path)
         
-        # Initialize marked timepoints
+        # Initialize marked timepoints and current frame
         self.marked_timepoints = []
+        self.current_frame = 0
         
         self.init_ui()
         
