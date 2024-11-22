@@ -185,6 +185,13 @@ def main():
     
     print(f'Processed {total_frames} frames ({total_frames/fps:.1f} seconds)')
     
+    # Save and plot mask
+    mask_path = output_dir / 'occupancy_mask.npy'
+    mask_plot_path = output_dir / 'occupancy_mask.png'
+    print(f"Saving occupancy mask plot to {mask_plot_path}")
+    plot_occupancy_mask(mask, mask_plot_path)
+    np.save(mask_path, mask)
+    
     # Save embedding
     embedding_path = output_dir / 'embedding.npy'
     np.save(embedding_path, embedding)
