@@ -7,8 +7,7 @@ from pathlib import Path
 from tqdm import tqdm
 
 def reduce_dimensionality_incremental(
-        video_path, 
-        mask, 
+        video_path,
         n_components=1, 
         batch_size=100
         ):
@@ -35,8 +34,6 @@ def reduce_dimensionality_incremental(
         # Convert frame to grayscale and normalize
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         gray = gray.astype(np.float32) / 255.0
-        # Multiply by mask to keep only relevant pixels 
-        gray = gray * mask
         
         if prev_gray is not None:
             # Compute frame difference
@@ -85,8 +82,6 @@ def main():
     
     parser.add_argument('input', type=str,
                        help='Path to input video file')
-    parser.add_argument('mask', type=str,
-                       help='Path to occupancy mask .npy file')
     parser.add_argument('--output-dir', type=str, default='output',
                        help='Directory for saving results')
     parser.add_argument('--batch-size', type=int, default=100,
@@ -99,9 +94,6 @@ def main():
     output_dir = Path(args.output_dir)
     output_dir.mkdir(exist_ok=True)
     
-    # Load mask
-    mask = np.load(args.mask)
-    
     # Get video properties
     cap = cv2.VideoCapture(args.input)
     fps = cap.get(cv2.CAP_PROP_FPS)
@@ -110,7 +102,6 @@ def main():
     print("Performing incremental dimensionality reduction...")
     embedding, total_frames = reduce_dimensionality_incremental(
         args.input,
-        mask,
         n_components=args.n_components,
         batch_size=args.batch_size
     )
