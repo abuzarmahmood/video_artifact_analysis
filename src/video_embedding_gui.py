@@ -9,7 +9,6 @@ import matplotlib
 matplotlib.use('Qt5Agg')
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
-import json
 
 class VideoEmbeddingViewer(QMainWindow):
     def __init__(self, video_path, embedding_path):
@@ -22,8 +21,7 @@ class VideoEmbeddingViewer(QMainWindow):
         self.fps = self.cap.get(cv2.CAP_PROP_FPS)
         
         # Load embedding
-        with open(embedding_path, 'r') as f:
-            self.embedding = np.array(json.load(f))
+        self.embedding = np.load(embedding_path)
         
         # Initialize marked timepoints
         self.marked_timepoints = []
@@ -159,7 +157,7 @@ def main():
     import argparse
     parser = argparse.ArgumentParser(description='Video and Embedding Viewer')
     parser.add_argument('video_path', help='Path to the video file')
-    parser.add_argument('embedding_path', help='Path to the embedding JSON file')
+    parser.add_argument('embedding_path', help='Path to the embedding NPY file')
     args = parser.parse_args()
     
     app = QApplication(sys.argv)
