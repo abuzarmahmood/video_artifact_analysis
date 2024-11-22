@@ -19,6 +19,7 @@ def create_occupancy_mask(video_path, threshold=0.1, min_frames=30, max_frames=1
     
     # Initialize accumulator for occupancy
     occupancy = np.zeros((height, width), dtype=np.float32)
+    occupancy_frame_counter = 0
     frame_data = []
     
     frame_count = 0
@@ -27,17 +28,17 @@ def create_occupancy_mask(video_path, threshold=0.1, min_frames=30, max_frames=1
         if not ret:
             break
             
-        # Skip frames if we're over max_frames
-        if max_frames and frame_count >= max_frames:
-            break
             
         # Convert frame to grayscale and normalize
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         gray = gray.astype(np.float32) / 255.0
         
         # Update occupancy map
-        movement = gray > threshold
-        occupancy += movement.astype(np.float32)
+        # Skip frames if we're over max_frames
+        if frame_count <= max_frames:
+            movement = gray > threshold
+            occupancy += movement.astype(np.float32)
+            occupancy_frame_counter += 1
         
         # Store frame data for later analysis
         frame_data.append(gray.flatten())
@@ -46,10 +47,10 @@ def create_occupancy_mask(video_path, threshold=0.1, min_frames=30, max_frames=1
     cap.release()
     
     # Normalize occupancy to [0,1]
-    occupancy = occupancy / total_frames
+    occupancy = occupancy / occupancy_frame_counter
     
     # Create binary mask where movement occurred in at least min_frames
-    mask = occupancy > (min_frames / total_frames)
+    mask = occupancy > (min_frames / occupancy_frame_counter)
     
     return mask, np.array(frame_data), fps
 
@@ -116,6 +117,8 @@ def main():
                                                  threshold=args.threshold,
                                                  min_frames=args.min_frames,
                                                  max_frames=args.max_frames)
+
+    print(f'Length of frame_data: {len(frame_data)}')
     
     print("Performing dimensionality reduction...")
     embedding = reduce_dimensionality(frame_data, mask)
@@ -124,6 +127,8 @@ def main():
     plot_path = output_dir / 'movement_trajectory.png'
     print(f"Saving trajectory plot to {plot_path}")
     plot_results(embedding, fps, plot_path)
+
+    print(f'Seconds of embedding: {len(embedding) / fps}')
     
     # Save and plot mask
     mask_path = output_dir / 'occupancy_mask.npy'

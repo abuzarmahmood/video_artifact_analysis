@@ -32,8 +32,8 @@ def create_visualization(video_path, embedding_path, output_path):
     ax1.axis('off')
     
     # Initialize PCA plot
-    time = np.arange(len(embedding)) / fps
-    line, = ax2.plot(time, embedding, 'b-', alpha=0.5)
+    x_time = np.arange(len(embedding)) / fps
+    line, = ax2.plot(x_time, embedding, 'b-', alpha=0.5)
     current_time_line = ax2.axvline(x=0, color='r')
     ax2.set_xlabel('Time (seconds)')
     ax2.set_ylabel('PCA Component 1')
