@@ -42,13 +42,12 @@ def create_occupancy_mask(video_path, threshold=0.1, min_frames=30, max_frames=1
     
     return mask, fps
 
-def reduce_dimensionality_incremental(video_path, mask, n_components=1, batch_size=100, threshold=0.1):
+def reduce_dimensionality_incremental(video_path, n_components=1, batch_size=100):
     """
-    Perform incremental PCA dimensionality reduction on the masked pixel data.
+    Perform incremental PCA dimensionality reduction on frame differences.
     """
     cap = cv2.VideoCapture(video_path)
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-    flat_mask = mask.flatten()
     
     # Initialize IncrementalPCA
     ipca = IncrementalPCA(n_components=n_components, batch_size=batch_size)
@@ -56,8 +55,9 @@ def reduce_dimensionality_incremental(video_path, mask, n_components=1, batch_si
     # Process frames in batches
     batch = []
     embedding = []
+    prev_gray = None
     
-    pbar = tqdm(total=total_frames, desc="Processing frames")
+    pbar = tqdm(total=total_frames-1, desc="Processing frames")  # -1 because we're using differences
     while cap.isOpened():
         ret, frame = cap.read()
         if not ret:
@@ -67,17 +67,20 @@ def reduce_dimensionality_incremental(video_path, mask, n_components=1, batch_si
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         gray = gray.astype(np.float32) / 255.0
         
-        # Apply mask and add to batch
-        masked_frame = gray.flatten()[flat_mask]
-        batch.append(masked_frame)
-        pbar.update(1)
+        if prev_gray is not None:
+            # Compute frame difference
+            diff = gray - prev_gray
+            batch.append(diff.flatten())
+            pbar.update(1)
+            
+            # Process batch when it reaches batch_size
+            if len(batch) >= batch_size:
+                batch_array = np.array(batch)
+                ipca.partial_fit(batch_array)
+                embedding.extend(ipca.transform(batch_array))
+                batch = []
         
-        # Process batch when it reaches batch_size
-        if len(batch) >= batch_size:
-            batch_array = np.array(batch)
-            ipca.partial_fit(batch_array)
-            embedding.extend(ipca.transform(batch_array))
-            batch = []
+        prev_gray = gray
     
     # Process remaining frames
     if batch:
@@ -86,7 +89,7 @@ def reduce_dimensionality_incremental(video_path, mask, n_components=1, batch_si
         embedding.extend(ipca.transform(batch_array))
     
     cap.release()
-    return np.array(embedding), total_frames
+    return np.array(embedding), total_frames - 1  # -1 because we're using differences
 
 def plot_occupancy_mask(mask, output_path):
     """
@@ -114,14 +117,8 @@ def plot_results(embedding, fps, output_path):
     plt.close()
 
 def main():
-    parser = argparse.ArgumentParser(description='Analyze movement in background-subtracted video')
+    parser = argparse.ArgumentParser(description='Analyze movement in video using frame differences')
     parser.add_argument('input', help='Input video file path')
-    parser.add_argument('--threshold', type=float, default=0.1,
-                      help='Threshold for movement detection (default: 0.1)')
-    parser.add_argument('--min-frames', type=int, default=30,
-                      help='Minimum frames for occupancy mask (default: 30)')
-    parser.add_argument('--max-frames', type=int, default=1000,
-                      help='Maximum frames to use for analysis (0 for no limit) (default: 1000)')
     parser.add_argument('--batch-size', type=int, default=100,
                       help='Batch size for incremental PCA (default: 100)')
     parser.add_argument('--output-dir', type=str, default='output',
@@ -135,21 +132,16 @@ def main():
     output_dir = Path(args.output_dir)
     output_dir.mkdir(exist_ok=True)
     
-    # Process input video to create mask
-    print("Creating occupancy mask...")
-    mask, fps = create_occupancy_mask(
-        args.input,
-        threshold=args.threshold,
-        min_frames=args.min_frames,
-        max_frames=args.max_frames
-    )
+    # Get video properties
+    cap = cv2.VideoCapture(args.input)
+    fps = cap.get(cv2.CAP_PROP_FPS)
+    cap.release()
     
     print("Performing incremental dimensionality reduction...")
     embedding, total_frames = reduce_dimensionality_incremental(
         args.input,
-        mask,
-        batch_size=args.batch_size,
-        threshold=args.threshold
+        n_components=args.n_components,
+        batch_size=args.batch_size
     )
     
     # Save results
@@ -159,13 +151,8 @@ def main():
     
     print(f'Processed {total_frames} frames ({total_frames/fps:.1f} seconds)')
     
-    # Save and plot mask
-    mask_path = output_dir / 'occupancy_mask.npy'
-    mask_plot_path = output_dir / 'occupancy_mask.png'
+    # Save embedding
     embedding_path = output_dir / 'embedding.npy'
-    print(f"Saving occupancy mask plot to {mask_plot_path}")
-    plot_occupancy_mask(mask, mask_plot_path)
-    np.save(mask_path, mask)
     np.save(embedding_path, embedding)
     
     print("Analysis complete!")
