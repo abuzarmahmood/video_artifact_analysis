@@ -10,6 +10,17 @@ from tqdm import tqdm
 def create_occupancy_mask(video_path, threshold=0.1, min_frames=30, max_frames=1000):
     """
     Create an occupancy mask from a background-subtracted video using running statistics.
+
+    Inputs:
+        - video_path: path to input video file
+        - threshold: threshold for detecting movement (default 0.1)
+        - min_frames: minimum number of frames with movement to include in mask (default 30)
+        - max_frames: maximum number of frames to process (default 1000, set to 0 to process all frames)
+
+    Outputs:
+        - mask: binary mask where movement occurred in at least min_frames
+        - fps: frames per second of the input video
+
     """
     cap = cv2.VideoCapture(video_path)
     width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
