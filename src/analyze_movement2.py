@@ -53,12 +53,18 @@ def create_occupancy_mask(video_path, threshold=0.1, min_frames=30, max_frames=1
     
     return mask, fps
 
-def reduce_dimensionality_incremental(video_path, n_components=1, batch_size=100):
+def reduce_dimensionality_incremental(
+        video_path, 
+        mask, 
+        n_components=1, 
+        batch_size=100
+        ):
     """
     Perform incremental PCA dimensionality reduction on frame differences.
     """
     cap = cv2.VideoCapture(video_path)
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+
     
     # Initialize IncrementalPCA
     ipca = IncrementalPCA(n_components=n_components, batch_size=batch_size)
@@ -77,6 +83,8 @@ def reduce_dimensionality_incremental(video_path, n_components=1, batch_size=100
         # Convert frame to grayscale and normalize
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         gray = gray.astype(np.float32) / 255.0
+        # Multiply by mask to keep only relevant pixels 
+        gray = gray * mask
         
         if prev_gray is not None:
             # Compute frame difference
@@ -175,6 +183,7 @@ def main():
     
     embedding, total_frames = reduce_dimensionality_incremental(
         args.input,
+        mask,
         n_components=args.n_components,
         batch_size=args.batch_size
     )

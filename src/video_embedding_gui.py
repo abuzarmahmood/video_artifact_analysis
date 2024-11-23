@@ -92,8 +92,8 @@ class VideoEmbeddingViewer(QMainWindow):
         
     def update_embedding_plot(self):
         self.ax.clear()
-        self.ax.plot(self.embedding)
-        self.ax.set_yscale('symlog', linthresh=0.1)
+        self.ax.plot(np.abs(self.embedding))
+        self.ax.set_yscale('symlog')
         
         # Plot marked regions
         for start, end in self.markers:
